@@ -1,0 +1,16 @@
+{
+  "name": "ts-codegenerator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node build/main.js",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^14.14.9",
+    "typescript": "^3.6.5"
+  }
+}
