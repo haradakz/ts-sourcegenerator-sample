@@ -23,11 +23,10 @@ export default class BasicSourceCreater {
             });
         }
         statements.push(clazz);
-
-        const source = ts.createSourceFile(this._fileName, "", ts.ScriptTarget.Latest, false, ts.ScriptKind.TS);
-        const ast = ts.updateSourceFileNode(source, statements);
-        const result = ts.createPrinter().printNode(ts.EmitHint.Unspecified, ast, source);
     
+        const source = ts.factory.createSourceFile(statements, undefined, undefined);
+        const result = ts.createPrinter().printNode(ts.EmitHint.Unspecified, source, undefined);
+
         return result;
     }
 
@@ -42,8 +41,8 @@ export default class BasicSourceCreater {
                 methodMap[key] = list = [];
                 if(key === "$_constructor"){
                     list.push(
-                        ts.createExpressionStatement(ts.createCall(
-                            ts.createSuper(),
+                        ts.factory.createExpressionStatement(ts.factory.createCallExpression(
+                            ts.factory.createSuper(),
                             undefined,
                             []
                         ))
@@ -63,19 +62,19 @@ export default class BasicSourceCreater {
         const result = [];
         for(const k of Object.keys(methodMap)) {
             const d = methodMap[k];
-            const block = ts.createBlock(d, true);
+            const block = ts.factory.createBlock(d, true);
             if(k === "$_constructor"){
-                result.push(ts.createConstructor(
+                result.push(ts.factory.createConstructorDeclaration(
                             undefined,
                             undefined,
                             [],
                             block));
             }else{
-                result.push(ts.createMethod(
+                result.push(ts.factory.createMethodDeclaration(
                             undefined,
-                            [ts.createModifier(ts.SyntaxKind.PublicKeyword)],
+                            [ts.factory.createModifier(ts.SyntaxKind.PublicKeyword)],
                             undefined,
-                            ts.createIdentifier(k),
+                            ts.factory.createIdentifier(k),
                             undefined,
                             undefined,
                             [],
@@ -87,12 +86,12 @@ export default class BasicSourceCreater {
     }
 
     protected createSetPropertyValue(name: string, value: string, type: string){
-        return ts.createExpressionStatement(ts.createBinary(
-            ts.createPropertyAccess(
-              ts.createThis(),
-              ts.createIdentifier(name)
+        return ts.factory.createExpressionStatement(ts.factory.createBinaryExpression(
+            ts.factory.createPropertyAccessExpression(
+              ts.factory.createThis(),
+              ts.factory.createIdentifier(name)
             ),
-            ts.createToken(ts.SyntaxKind.EqualsToken),
+            ts.factory.createToken(ts.SyntaxKind.EqualsToken),
             this.createLiteral(value, type)
           ))
     }
@@ -102,31 +101,31 @@ export default class BasicSourceCreater {
         switch(type){
             case "string":
                 if(value){
-                    literal = ts.createStringLiteral(value);
+                    literal = ts.factory.createStringLiteral(value);
                 }else{
-                    literal = ts.createStringLiteral('');
+                    literal = ts.factory.createStringLiteral('');
                 }
                 break;
             case "number":
                 if(value){
-                    literal = ts.createNumericLiteral(value);
+                    literal = ts.factory.createNumericLiteral(value);
                 }else{
-                    literal = ts.createNumericLiteral('0');
+                    literal = ts.factory.createNumericLiteral('0');
                 }
                 break;
             case "boolean":
                 if(value === "true"){
-                    literal = ts.createTrue();
+                    literal = ts.factory.createTrue();
                 }else{
-                    literal = ts.createFalse();
+                    literal = ts.factory.createFalse();
                 }
                 break;
             case "array":
-                literal = ts.createArrayLiteral();
+                literal = ts.factory.createArrayLiteralExpression();
                 break;    
             case "null":
             default:
-                literal = ts.createNull();
+                literal = ts.factory.createNull();
         }
         return literal;
     }
@@ -196,31 +195,31 @@ export default class BasicSourceCreater {
                 break;
         }
         let typeNode: ts.TypeNode;
-        typeNode = ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+        typeNode = ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
         if(type){
             switch(type){
                 case "string":
-                    typeNode = ts.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+                    typeNode = ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
                     break;
                 case "number":
-                    typeNode = ts.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+                    typeNode = ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
                     break;
                 case "boolean":
-                    typeNode = ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+                    typeNode = ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
                     break;
                 default:
-                    typeNode = ts.createTypeReferenceNode(ts.createIdentifier(type), undefined);
+                    typeNode = ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(type), undefined);
             }
         }
         if(array){
-            typeNode = ts.createArrayTypeNode(typeNode);
+            typeNode = ts.factory.createArrayTypeNode(typeNode);
         }
-        let node = ts.createProperty(
+        let node = ts.factory.createPropertyDeclaration(
             undefined,
             [
-                ts.createModifier(modifierType)
+                ts.factory.createModifier(modifierType)
             ],
-            ts.createIdentifier(name),
+            ts.factory.createIdentifier(name),
             undefined,
             typeNode,
             undefined
@@ -233,53 +232,54 @@ export default class BasicSourceCreater {
 
     protected createPropertyAssignment(name: string, value: string, type: string): ts.ObjectLiteralElementLike{
         const literal = this.createLiteral(value, type);
-        return ts.createPropertyAssignment(
-                    ts.createIdentifier(name),
+        return ts.factory.createPropertyAssignment(
+                    ts.factory.createIdentifier(name),
                     literal
         );
     }
     
     protected createObjectLiteral(properties: ts.ObjectLiteralElementLike[]){
-        return ts.createObjectLiteral(
+        return ts.factory.createObjectLiteralExpression(
             properties,
             true
         );
     }
     
     protected createMethodReternObjectLiteral(name: string, objectLiteral: ts.ObjectLiteralExpression){
-        return ts.createMethod(
+        return ts.factory.createMethodDeclaration(
             undefined,
-            [ts.createModifier(ts.SyntaxKind.PublicKeyword)],
+            [ts.factory.createModifier(ts.SyntaxKind.PublicKeyword)],
             undefined,
-            ts.createIdentifier(name),
+            ts.factory.createIdentifier(name),
             undefined,
             undefined,
             [],
-            ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
-            ts.createBlock(
+            ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+            ts.factory.createBlock(
               [
-                  ts.createReturn(objectLiteral)
+                  ts.factory.createReturnStatement(objectLiteral)
               ],
               true
             )
         );
     }
     protected createImportStatement(names: string[], moduleName: string): ts.ImportDeclaration {
-        return ts.createImportDeclaration(
+        return ts.factory.createImportDeclaration(
             undefined, 
             undefined, 
-            ts.createImportClause(
+            ts.factory.createImportClause(
+                false,
                 undefined, 
-                ts.createNamedImports(
+                ts.factory.createNamedImports(
                     names.map((n) => {
-                        return ts.createImportSpecifier(
+                        return ts.factory.createImportSpecifier(
                             undefined,
-                            ts.createIdentifier(n)
+                            ts.factory.createIdentifier(n)
                           )
                     })
                 )
             ),
-            ts.createStringLiteral(moduleName)
+            ts.factory.createStringLiteral(moduleName)
         );
     }        
     protected createClass(name: string, comment: string, members: ts.ClassElement[], extendClassName?: string, extendClassModule?: string, typeRefName?: string, typeRefModule?: string){
@@ -292,30 +292,30 @@ export default class BasicSourceCreater {
                 if(typeRefModule){
                     this.addImports(typeRefName, typeRefModule);
                 }
-                heritageClause = [ts.createHeritageClause(
+                heritageClause = [ts.factory.createHeritageClause(
                     ts.SyntaxKind.ExtendsKeyword,
-                    [ts.createExpressionWithTypeArguments(
-                      [ts.createTypeReferenceNode(
-                        ts.createIdentifier(typeRefName),
+                    [ts.factory.createExpressionWithTypeArguments(
+                      ts.factory.createIdentifier(extendClassName),
+                      [ts.factory.createTypeReferenceNode(
+                        ts.factory.createIdentifier(typeRefName),
                         undefined
-                      )],
-                      ts.createIdentifier(extendClassName)
+                      )]
                     )]
                   )];
             }else{
-                heritageClause = [ts.createHeritageClause(
+                heritageClause = [ts.factory.createHeritageClause(
                     ts.SyntaxKind.ExtendsKeyword,
-                    [ts.createExpressionWithTypeArguments(
-                      undefined,
-                      ts.createIdentifier(extendClassName)
+                    [ts.factory.createExpressionWithTypeArguments(
+                        ts.factory.createIdentifier(extendClassName),
+                        undefined
                     )]
                   )];
             }
         }
-        let node = ts.createClassDeclaration(
+        let node = ts.factory.createClassDeclaration(
             undefined,
-            [ts.createModifier(ts.SyntaxKind.ExportKeyword)],
-            ts.createIdentifier(name),
+            [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+            ts.factory.createIdentifier(name),
             undefined,
             heritageClause,
             members
